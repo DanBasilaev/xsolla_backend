@@ -60,7 +60,38 @@ func main() {
 		})
 
 	//Редактирование товара
-	//r.PUT("/", func(c *gin.Context) {})
+	r.PUT("/upItem", func(c *gin.Context) {
+		id := c.Query("id")
+		get_item, err := db.Query("SELECT id, sku, name, category, price FROM items where id=?", id)
+		if err != nil {
+			c.JSON(404, gin.H{"massage": "Query error"})
+			panic(err)
+		}
+
+		get_item.Next()
+		var itm item
+		err = get_item.Scan(&itm.id, &itm.sku, &itm.name, &itm.category, &itm.price)
+		if err != nil {
+			c.JSON(500, gin.H{"massage": "there is no such id"})
+			panic(err)
+		}
+
+		name := c.Query("name")
+		category := c.Query("category")
+		price := c.Query("price")
+
+		update, err := db.Query("UPDATE items SET name=?, category=?,price=? where id=?", name, category, price, id)
+		if err != nil {
+			c.JSON(404, gin.H{"massage": "Query error"})
+			panic(err)
+		}
+
+		defer update.Close()
+
+		//c.JSON(200, gin.H{"id":itm.id, "sku":itm.sku, "name":itm.name, "category":itm.category, "price":itm.price})
+		defer get_item.Close()
+
+	})
 
 	//Удаление товара по его идентификатору или SKU
 	r.DELETE("/delItem", func(c *gin.Context) {
@@ -128,7 +159,7 @@ func main() {
 
 			c.JSON(200, gin.H{"id":itm.id, "sku":itm.sku, "name":itm.name, "category":itm.category, "price":itm.price})
 		}
-		
+
 		defer get_item.Close()
 
 	})
